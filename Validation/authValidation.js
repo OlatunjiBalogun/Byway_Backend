@@ -9,7 +9,7 @@ const signupValidation = [
 const loginValidation = [
     body("username").optional().notEmpty().withMessage("username is required"),
     body("email").optional().isEmail().withMessage("Please enter a valid email address"),
-    body("Password").notEmpty().withMessage("Password is required"),
+    body("password").notEmpty().withMessage("password is required"),
     body("email").custom((value,{req})=>{
         if (!value && !req.body.username) {
             throw new Error("Email or username is required")
@@ -23,7 +23,8 @@ const validation = (req,res,next)=>{
         return res.status(400).json({
             success: false,
             Errors: Error.array().map((error)=>error.msg)
-        })
+        });
     }
-
+    next();
 };
+module.exports = {loginValidation,signupValidation,validation};
