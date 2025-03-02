@@ -6,6 +6,7 @@ const signupValidation = [
     body("email").trim().notEmpty().withMessage("email is required").isEmail().withMessage("Invalid email adddress"),
     body("password").trim().notEmpty().withMessage("password is required").isLength({min:8}).withMessage("Password must be atleast 8 characters")
 ];
+
 const loginValidation = [
     body("username").optional().notEmpty().withMessage("username is required"),
     body("email").optional().isEmail().withMessage("Please enter a valid email address"),
