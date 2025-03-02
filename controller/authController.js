@@ -48,7 +48,17 @@ const login = async function (req,res) {
         if(!existingUser){return res.status(401).json({message:"Invalid username or email"})}
         const isCorrectPassword = await bcrypt.compare(password,existingUser.password);
         if(!isCorrectPassword){return res.status(401).json({message:"Incorrect pasword"})}
+        const token = jwt.sign(
+            {
+                userId: existingUser._id,
+                username: existingUser.username,
+                email: existingUser.email
+            },
+            process.env.JWSECRET,
+            { expiresIn: "1d" } // Expires in 1 day
+        );
         res.status(201).json({message:"User log in successfully",
+            token,
             user:{
                 Id:existingUser._id,
                 username:existingUser.username,
