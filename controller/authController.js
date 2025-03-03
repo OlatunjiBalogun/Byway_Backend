@@ -1,114 +1,77 @@
-const User = require("../models/User");
+const user = require("../models/User");
 const jwt = require("jsonwebtoken");
 const bcrypt = require("bcryptjs");
-
-const signup = async function(req, res) {
+const signup = async function(req,res) {
     try {
-        const { username, firstname, lastname, email, password } = req.body;
-        
-        // Validate required fields
-        if (!username || !firstname || !lastname || !email || !password) {
-            return res.status(400).json({ message: "Please fill in all fields" });
+        const{username,firstname,lastname,email,password}=req.body;
+        if(!username || !firstname || !lastname || !email || !password){
+            return res.status(400).json({message:"Please fill in all field"});
         }
-        
-        // Check if user already exists
-        const existingUser = await User.findOne({
-            $or: [{ email }, { username }],
+        const existingUser = await user.findOne({
+            $or:[{email},{username}],
         });
-        
-        if (existingUser) {
-            if (existingUser.email === email) {
-                return res.status(409).json({ message: "Email already exists" });
-            } else {
-                return res.status(409).json({ message: "Username already exists" });
+        if(existingUser){
+            if(existingUser.email===email){
+                return res.status(409).json({message:"Email already exist"});
+            }else{
+                return res.status(409).json({message:"Username already exist"});
             }
         }
-        
-        // Hash password before saving
-        const salt = await bcrypt.genSalt(10);
-        const hashedPassword = await bcrypt.hash(password, salt);
-        
-        // Create new user with hashed password
-        const newUser = new User({
-            username,
-            firstname,
-            lastname,
-            email,
-            password: hashedPassword
+        const newUser = new user({
+            username,firstname,lastname,email,password
         });
-        
         await newUser.save();
-        
-        res.status(201).json({
-            message: "User created successfully",
-            user: {
-                id: newUser._id,
-                username: newUser.username,
-                firstname: newUser.firstname,
-                lastname: newUser.lastname,
+        res.status(201).json({message:"User created successfully",
+            user:{
+                Id:newUser._id,
+                username:newUser.username,
+                firstname:newUser.firstname,
+                lastname:newUser.lastname,
                 email: newUser.email,
             }
         });
     } catch (error) {
-        console.error("Signup error:", error);
-        res.status(500).json({ message: "Error signing up user" });
-    }
-};
+        console.error("error",error);
+        res.status(500).json({message:"Error signing up user"});
 
-const login = async function (req, res) {
+    }
+
+};
+const login = async function (req,res) {
     try {
-        const { username, email, password } = req.body;
-        
-        // Check if either username/email and password are provided
-        if ((!email && !username) || !password) {
-            return res.status(400).json({ message: "Please provide username/email and password" });
-        }
-        
-        // Find user by username or email
-        const existingUser = await User.findOne({
-            $or: [
-                { email: email || "" },
-                { username: username || "" }
-            ],
+        const{username,email,password}=req.body;
+        if((!email || !username) && !password)
+        {return res.status(400).json({message:"Please fill in all field"})}
+        const existingUser = await user.findOne({
+            $or:[{email},{username}],
         });
-        
-        if (!existingUser) {
-            return res.status(401).json({ message: "Invalid credentials" });
-        }
-        
-        // Compare passwords
-        const isCorrectPassword = await bcrypt.compare(password, existingUser.password);
-        if (!isCorrectPassword) {
-            return res.status(401).json({ message: "Invalid credentials" });
-        }
-        
-        // Generate JWT token
+        if(!existingUser){return res.status(401).json({message:"Invalid username or email"})}
+        const isCorrectPassword = await bcrypt.compare(password,existingUser.password);
+        if(!isCorrectPassword){return res.status(401).json({message:"Incorrect pasword"})}
         const token = jwt.sign(
             {
                 userId: existingUser._id,
                 username: existingUser.username,
                 email: existingUser.email
             },
-            process.env.JWT_SECRET,
-            { expiresIn: "1d" }
+            process.env.JWSECRET,
+            { expiresIn: "1d" } // Expires in 1 day
         );
-        
-        res.status(200).json({
-            message: "User logged in successfully",
+        res.status(201).json({message:"User log in successfully",
             token,
-            user: {
-                id: existingUser._id,
-                username: existingUser.username,
-                firstname: existingUser.firstname,
-                lastname: existingUser.lastname,
+            user:{
+                Id:existingUser._id,
+                username:existingUser.username,
+                firstname:existingUser.firstname,
+                lastname:existingUser.lastname,
                 email: existingUser.email,
             }
         });
 
     } catch (error) {
-        console.error("Login error:", error);
-        res.status(500).json({ message: "Error logging in user" });
+        console.error("error",error);
+        res.status(500).json({message:"Error login user"});
     }
-};
 
-module.exports = { signup, login };
+};
+module.exports = {signup,login};
