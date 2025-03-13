@@ -10,30 +10,39 @@ const errorHandler = require("./Validation/middleware/errorhandler");
 const app = express();
 
 //Configure middlewares
-app.use(cors());
+app.use(cors({
+    origin: "*",
+    credentials: true  // Note: should be lowercase
+}));
 
 //ensure that express can read json
 app.use(express.json());
 const rateLimiter = limiter({
-    windowMs: 30 * 60 * 1000,
-    max: 50,
-    message: "please try again in 30mins"
+    windowMs: 15 * 60 * 1000,
+    max: 100,
+    message: "Too many requests, please try again later."
 });
 app.use("/byway",rateLimiter);
 app.use("/byway",authroutes);
 app.use(errorHandler);
 
 //Mongo db connection
-mongoose.connect(process.env.MONGODB_URL)
-.then(() => {
-    console.log("Connected to MongoDB");
-})
-.catch((error) => {
-    console.log("Mongo Db Error:", error);
-});
-
-// Start node js server
-const PORT = process.env.PORT;
-app.listen(PORT,()=>{
-    console.log(`Server is running on port ${PORT}`);
-});
+const connectDB = async () => {
+    try {
+        await mongoose.connect(process.env.MONGODB_URL, {
+            serverSelectionTimeoutMS: 30000,
+            connectTimeoutMS: 5000,
+        });
+        console.log('Connected to MongoDB');
+        
+        const port = process.env.PORT || 5000;
+        app.listen(port, () => {
+            console.log(`Server is running on port ${port}`);
+        });
+    } catch (error) {
+        console.log('Error connecting to MongoDB:', error);
+        process.exit(1);
+    }
+};
+connectDB();
+module.exports=app;
