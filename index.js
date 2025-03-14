@@ -4,26 +4,32 @@ const express= require("express");
 const mongoose= require("mongoose");
 const cors= require("cors");
 const authroutes= require("./routes/authrouthes");
-const limiter = require("express-rate-limit");
-const errorHandler = require("./Validation/middleware/errorhandler");
+const errorHandler = require("./middleware/errorhandler");
+const rateLimit = require("express-rate-limit");
 // Initialize a express app
 const app = express();
 
 //Configure middlewares
-app.use(cors({
-    origin: "*",
-    credentials: true  // Note: should be lowercase
-}));
+app.use(cors(
+    {
+        origin: "*", // Allow requests from any origin
+        credentials: true
+    }
+));
 
 //ensure that express can read json
 app.use(express.json());
-const rateLimiter = limiter({
+
+const rateLimiter = rateLimit({
     windowMs: 15 * 60 * 1000,
     max: 100,
     message: "Too many requests, please try again later."
 });
-app.use("/byway",rateLimiter);
+app.use("/byway", rateLimiter);
+
 app.use("/byway",authroutes);
+
+ //Handle errors globally
 app.use(errorHandler);
 
 //Mongo db connection
