@@ -1,15 +1,13 @@
-// Bring down Packages installed
-require("dotenv").config();
-const express= require("express");
-const mongoose= require("mongoose");
-const cors= require("cors");
-const authroutes= require("./routes/authRoute");
-const errorHandler = require("./middleware/errorhandler");
-const rateLimit = require("express-rate-limit");
-// Initialize a express app
+require('dotenv').config();
+const express = require('express');
+const mongoose = require('mongoose');
+const cors = require('cors');
+const authRoute = require('./auth/routes');
+const errorHandler = require('./middlewares/errorHandler');
+const rateLimit = require('express-rate-limit');
+
 const app = express();
 
-//Configure middlewares
 app.use(cors(
     {
         origin: "*", // Allow requests from any origin
@@ -17,38 +15,39 @@ app.use(cors(
     }
 ));
 
-//ensure that express can read json
 app.use(express.json());
 
-const rateLimiter = rateLimit({
-    windowMs: 15 * 60 * 1000,
-    max: 100,
-    message: "Too many requests, please try again later."
+const authLimiter = rateLimit({
+    windowMs: 15 * 60 * 1000, // 15 minutes
+    max: 100, // Limit each IP to 100 requests per windowMs
+    message: "Too many requests, please try again later." 
 });
-app.use("/byway", rateLimiter);
 
-app.use("/byway",authroutes);
+app.use("/api/auth", authLimiter);
+app.use("/api/auth", authRoute);
 
- //Handle errors globally
-app.use(errorHandler);
+app.use(errorHandler); // Error handling middleware
 
-//Mongo db connection
+const url = process.env.MONGODB_URL; 
+const options = { serverSelectionTimeoutMS: 30000, connectTimeoutMS: 5000, }; // Set connection timeout to 30 seconds
+
+// Connect to MongoDB before starting the server 
 const connectDB = async () => {
     try {
-        await mongoose.connect(process.env.MONGODB_URL, {
-            serverSelectionTimeoutMS: 30000,
-            connectTimeoutMS: 5000,
-        });
+        await mongoose.connect(url, options);
         console.log('Connected to MongoDB');
-        
-        const port = process.env.PORT || 5000;
-        app.listen(port, () => {
-            console.log(`Server is running on port ${port}`);
-        });
     } catch (error) {
         console.log('Error connecting to MongoDB:', error);
-        process.exit(1);
+        process.exit(1); // Exit the process if connection fails
     }
-};
+
+    const port = process.env.PORT || 5000;
+    app.listen(port, () => {
+        console.log(`Server is running on port ${port}`);
+    });
+
+}
 connectDB();
-module.exports=app;
+
+// Export the app for Deployment
+module.exports = app;
