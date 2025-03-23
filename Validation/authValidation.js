@@ -1,31 +1,74 @@
-const {body,validationResult} = require("express-validator");
-const signupValidation = [
-    body("username").trim().notEmpty().withMessage("username is required").isAlphanumeric().withMessage("username must be alpha numeric").isLength({min:3,max:20}).withMessage("username must be between 3 and 20 characters"),
-    body("firstname").notEmpty().withMessage("firstname is required").isLength({min:3,max:20}).withMessage("firstname must be between 3 and 20 characters"),
-    body("lastname").notEmpty().withMessage("lastname is required").isLength({min:3,max:20}).withMessage("lastname must be between 3 and 20 characters"),
-    body("email").trim().notEmpty().withMessage("email is required").isEmail().withMessage("Invalid email adddress"),
-    body("password").trim().notEmpty().withMessage("password is required").isLength({min:8}).withMessage("Password must be atleast 8 characters")
+const { body, validationResult } = require("express-validator");
+
+// signup validation
+const signupValidationRules = [
+    body("firstname")
+        .trim()
+        .notEmpty()
+        .withMessage("First name is required")
+        .isLength({ min: 2, max: 30 })
+        .withMessage("First name must be between 2 and 30 characters"),
+    body("lastname")
+        .trim()
+        .notEmpty()
+        .withMessage("Last name is required")
+        .isLength({ min: 2, max: 30 })
+        .withMessage("Last name must be between 2 and 30 characters"),
+
+    body("username")
+        .trim()
+        .notEmpty()
+        .withMessage("Username is required")
+        .isAlphanumeric()
+        .withMessage("Username must be alphanumeric")
+        .isLength({ min: 3, max: 30 })
+        .withMessage("Username must be between 3 and 30 characters"),
+    body("email")
+        .trim()
+        .notEmpty()
+        .withMessage("Email is required")
+        .isEmail()
+        .withMessage("Invalid email address"),
+
+    body("password")
+        .trim()
+        .notEmpty()
+        .withMessage("Password is required")
+        .isLength({ min: 8 })
+        .withMessage("Password must be at least 8 characters")
+
 ];
 
-const loginValidation = [
-    body("username").optional().notEmpty().withMessage("username is required"),
-    body("email").optional().isEmail().withMessage("Please enter a valid email address"),
-    body("password").notEmpty().withMessage("password is required"),
-    body("email").custom((value,{req})=>{
+// sign in validation
+const signinValidationRules = [
+    body("email")
+        .optional()
+        .isEmail()
+        .withMessage("Please enter a valid email address"),
+    body("username").optional().notEmpty().withMessage("Username is required"),
+    body("password").notEmpty().withMessage("Password is required"),
+    body("email").custom((value, { req }) => {
         if (!value && !req.body.username) {
-            throw new Error("Email or username is required")
+            throw new Error("Email or username is required");
         }
         return true;
-    })
+    }),
 ];
-const validation = (req,res,next)=>{
-    const Error = validationResult(req);
-    if (!Error.isEmpty()) {
+
+//middleware to handle validation errors
+const validate = (req, res, next) => {
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
         return res.status(400).json({
             success: false,
-            Errors: Error.array().map((error)=>error.msg)
+            errors: errors.array().map((err) => err.msg),
         });
     }
     next();
 };
-module.exports = {loginValidation,signupValidation,validation};
+
+module.exports = {
+    signupValidationRules,
+    signinValidationRules,
+    validate,
+};

@@ -3,7 +3,7 @@ require("dotenv").config();
 const express= require("express");
 const mongoose= require("mongoose");
 const cors= require("cors");
-const authroutes= require("./routes/authrouthes");
+const authroutes= require("./routes/authRoute");
 const errorHandler = require("./middleware/errorhandler");
 const rateLimit = require("express-rate-limit");
 // Initialize a express app
