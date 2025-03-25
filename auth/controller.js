@@ -66,7 +66,7 @@ const login = async (req, res) => {
         if (!username && !email) {
             return res.status(400).json({
                 success: false,
-                message: "Please provide either a username or email.",
+                message: "Please provide either a username or email ID.",
             });
         }
 
